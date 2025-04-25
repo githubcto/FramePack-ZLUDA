@@ -1,5 +1,117 @@
+<div align="center">
+
+# FramePack-ZLUDA
+
+FramePack ZLUDA
+
+</div>
+
+## Install
+
+- install python from [www.python.org](https://www.python.org/) .
+   Tested Python3.10.17 and Python3.11.12 .
+- install [git](https://git-scm.com/).
+- install [AMD HIP SDK for Windows 6.2.4](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html) .
+   If  5.7.1 already installed, uninstall 5.7.1 before installing 6.2.4 .
+- Open Command Prompt (not PowerShell), then run the following:
+```
+   git clone https://github.com/githubcto/FramePack-ZLUDA.git
+   cd FramePack-ZLUDA
+   python.exe -m venv venv
+   venv\Scripts\activate.bat
+   python.exe -m pip install --upgrade pip
+   pip install torch==2.6.0 torchvision --index-url https://download.pytorch.org/whl/cu118
+   pip install -r requirements.txt
+   curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.dba64c0966df2c71e82255e942c96e2e1cea3a2d/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
+   mkdir .zluda && tar -xf zluda.zip -C .zluda  --strip-components=1
+```
+   Next, replace the following DLL files in venv/Lib/site-packages/torch/lib with the ones provided in the .zluda folder:
+   
+   cublas.dll
+   cusparse.dll
+   cufft.dll
+   cufftw.dll
+   nvrtc.dll
+   
+   You can find them at venv/Lib/site-packages/torch/lib.
+   
+   or,
+   
+   [download zip](https://github.com/githubcto/FramePack-ZLUDA/archive/refs/heads/main.zip), extract, and refer to install-win-zluda.bat .
+
+
+
+## Run
+FramePack-user.bat
+
+1st run,
+- will download 40GB.
+- ZLUDA compile takes around 20min.
+- Duriing this 20min, you'll see the message 
+   "Compilation is in progress. Please wait..." every 30 sec.
+
+If FramePack-user.bat does not work, try FramePack-user-DEVICE0.bat or FramePack-user-DEVICE1.bat .
+
+## Tips
+1st time generate,
+ try
+- Use square image. FramePack read and resize it.
+- 1 sec
+- 10 steps
+- orher values: use preset
+- Start Generation, see VRAM and DRAM usage.
+
+DRAM 64GB minimum. 64GB enouth for linux. 96GB enouth for windows. 128GB recommend. Set page file AUTO, 64GB or more.
+
+TeaCache is fast, but output quality is not so good. Try TeaCache and you feel good movie, then disable TeaCache and try same seed again.
+
+Saved png files can be converted mp4 movie [using ffmpeg](https://ffmpeg.org/) like this.
+```
+ffmpeg.exe -framerate 30 -i %4d.png -c:v libx264 -crf 23 -pix_fmt yuv420p -an out.mp4
+```
+
+## Issue
+Since my VGA is RX 6000, I can not verify some Attentions which RX 7000 support, for example,
+
+[Repeerc/flash-attention-v2-RDNA3-minimal](https://github.com/Repeerc/flash-attention-v2-RDNA3-minimal)
+
+( You need modify [demo_gradio.py](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L10) from "False" to "True", maybe.)
+
+torch.backends.cuda.enable_flash_sdp(False)
+
+.
+
+So, I shall close FramePack-ZLUDA repo without any notice.
+
+## for Linux ROCm
+
+This code may help.
+
+FramePack-ZLUDA [demo_gradio.py](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L74-L87) 
+```
+# VAE Tiling size
+vae.enable_tiling(
+    tile_sample_min_height=128,  #256
+    tile_sample_min_width=128,   #256
+    tile_sample_min_num_frames=12,  #16
+    tile_sample_stride_height=96,  #292
+    tile_sample_stride_width=96,   #192
+    tile_sample_stride_num_frames=10   #12
+)
+```
+
+VAE tile size is adjustable. not only resolution but also frames.
+
+source code
+
+venv/Lib/site-packages/diffusers/models/autoencoders/autoencoder_kl_hunyuan_video.py
+
+HuggingFace diffusers [autoencoder_kl_hunyuan_video.py](https://github.com/huggingface/diffusers/blob/f00a995753732210a696de447cd0db80e181c30a/src/diffusers/models/autoencoders/autoencoder_kl_hunyuan_video.py#L717-L766) 
+
+---
+
 <p align="center">
-    <img src="https://github.com/user-attachments/assets/2cc030b4-87e1-40a0-b5bf-1b7d6b62820b" width="300">
+
 </p>
 
 # FramePack
@@ -52,7 +164,6 @@ After you download, you uncompress, use `update.bat` to update, and use `run.bat
 
 Note that running `update.bat` is important, otherwise you may be using a previous version with potential bugs unfixed.
 
-![image](https://github.com/lllyasviel/stable-diffusion-webui-forge/assets/19834515/c49bd60d-82bd-4086-9859-88d472582b94)
 
 Note that the models will be downloaded automatically. You will download more than 30GB from HuggingFace.
 
@@ -79,363 +190,11 @@ However, you are highly recommended to first try without sage-attention since it
 
 # GUI
 
-![ui](https://github.com/user-attachments/assets/8c5cdbb1-b80c-4b7e-ac27-83834ac24cc4)
-
-On the left you upload an image and write a prompt.
-
-On the right are the generated videos and latent previews.
-
-Because this is a next-frame-section prediction model, videos will be generated longer and longer.
-
-You will see the progress bar for each section and the latent preview for the next section.
-
-Note that the initial progress may be slower than later diffusion as the device may need some warmup.
-
 # Sanity Check
 
 Before trying your own inputs, we highly recommend going through the sanity check to find out if any hardware or software went wrong. 
 
 Next-frame-section prediction models are very sensitive to subtle differences in noise and hardware. Usually, people will get slightly different results on different devices, but the results should look overall similar. In some cases, if possible, you'll get exactly the same results.
-
-## Image-to-5-seconds
-
-Download this image:
-
-<img src="https://github.com/user-attachments/assets/f3bc35cf-656a-4c9c-a83a-bbab24858b09" width="150">
-
-Copy this prompt:
-
-`The man dances energetically, leaping mid-air with fluid arm swings and quick footwork.`
-
-Set like this:
-
-(all default parameters, with teacache turned off)
-![image](https://github.com/user-attachments/assets/0071fbb6-600c-4e0f-adc9-31980d540e9d)
-
-The result will be:
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/bc74f039-2b14-4260-a30b-ceacf611a185" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
-**Important Note:**
-
-Again, this is a next-frame-section prediction model. This means you will generate videos frame-by-frame or section-by-section.
-
-**If you get a much shorter video in the UI, like a video with only 1 second, then it is totally expected.** You just need to wait. More sections will be generated to complete the video.
-
-## Know the influence of TeaCache and Quantization
-
-Download this image:
-
-<img src="https://github.com/user-attachments/assets/42293e30-bdd4-456d-895c-8fedff71be04" width="150">
-
-Copy this prompt:
-
-`The girl dances gracefully, with clear movements, full of charm.`
-
-Set like this:
-
-![image](https://github.com/user-attachments/assets/4274207d-5180-4824-a552-d0d801933435)
-
-Turn off teacache:
-
-![image](https://github.com/user-attachments/assets/53b309fb-667b-4aa8-96a1-f129c7a09ca6)
-
-You will get this:
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/04ab527b-6da1-4726-9210-a8853dda5577" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
-Now turn on teacache:
-
-![image](https://github.com/user-attachments/assets/16ad047b-fbcc-4091-83dc-d46bea40708c)
-
-About 30% users will get this (the other 70% will get other random results depending on their hardware):
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/149fb486-9ccc-4a48-b1f0-326253051e9b" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>A typical worse result.</em>
-    </td>
-  </tr>
-</table>
-
-So you can see that teacache is not really lossless and sometimes can influence the result a lot.
-
-We recommend using teacache to try ideas and then using the full diffusion process to get high-quality results.
-
-This recommendation also applies to sage-attention, bnb quant, gguf, etc., etc.
-
-## Image-to-1-minute
-
-<img src="https://github.com/user-attachments/assets/820af6ca-3c2e-4bbc-afe8-9a9be1994ff5" width="150">
-
-`The girl dances gracefully, with clear movements, full of charm.`
-
-![image](https://github.com/user-attachments/assets/8c34fcb2-288a-44b3-a33d-9d2324e30cbd)
-
-Set video length to 60 seconds:
-
-![image](https://github.com/user-attachments/assets/5595a7ea-f74e-445e-ad5f-3fb5b4b21bee)
-
-If everything is in order you will get some result like this eventually.
-
-60s version:
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/c3be4bde-2e33-4fd4-b76d-289a036d3a47" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
-6s version:
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/37fe2c33-cb03-41e8-acca-920ab3e34861" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
-# More Examples
-
-Many more examples are in [**Project Page**](https://lllyasviel.github.io/frame_pack_gitpage/).
-
-Below are some more examples that you may be interested in reproducing.
-
----
-
-<img src="https://github.com/user-attachments/assets/99f4d281-28ad-44f5-8700-aa7a4e5638fa" width="150">
-
-`The girl dances gracefully, with clear movements, full of charm.`
-
-![image](https://github.com/user-attachments/assets/0e98bfca-1d91-4b1d-b30f-4236b517c35e)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/cebe178a-09ce-4b7a-8f3c-060332f4dab1" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/853f4f40-2956-472f-aa7a-fa50da03ed92" width="150">
-
-`The girl suddenly took out a sign that said “cute” using right hand`
-
-![image](https://github.com/user-attachments/assets/d51180e4-5537-4e25-a6c6-faecae28648a)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/116069d2-7499-4f38-ada7-8f85517d1fbb" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/6d87c53f-81b2-4108-a704-697164ae2e81" width="150">
-
-`The girl skateboarding, repeating the endless spinning and dancing and jumping on a skateboard, with clear movements, full of charm.`
-
-![image](https://github.com/user-attachments/assets/c2cfa835-b8e6-4c28-97f8-88f42da1ffdf)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/d9e3534a-eb17-4af2-a8ed-8e692e9993d2" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/6e95d1a5-9674-4c9a-97a9-ddf704159b79" width="150">
-
-`The girl dances gracefully, with clear movements, full of charm.`
-
-![image](https://github.com/user-attachments/assets/7412802a-ce44-4188-b1a4-cfe19f9c9118)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/e1b3279e-e30d-4d32-b55f-2fb1d37c81d2" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/90fc6d7e-8f6b-4f8c-a5df-ee5b1c8b63c9" width="150">
-
-`The man dances flamboyantly, swinging his hips and striking bold poses with dramatic flair.`
-
-![image](https://github.com/user-attachments/assets/1dcf10a3-9747-4e77-a269-03a9379dd9af)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/aaa4481b-7bf8-4c64-bc32-909659767115" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/62ecf987-ec0c-401d-b3c9-be9ffe84ee5b" width="150">
-
-`The woman dances elegantly among the blossoms, spinning slowly with flowing sleeves and graceful hand movements.`
-
-![image](https://github.com/user-attachments/assets/396f06bc-e399-4ac3-9766-8a42d4f8d383)
-
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/f23f2f37-c9b8-45d5-a1be-7c87bd4b41cf" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
-
----
-
-<img src="https://github.com/user-attachments/assets/4f740c1a-2d2f-40a6-9613-d6fe64c428aa" width="150">
-
-`The young man writes intensely, flipping papers and adjusting his glasses with swift, focused movements.`
-
-![image](https://github.com/user-attachments/assets/c4513c4b-997a-429b-b092-bb275a37b719)
-
-<table>
-  <tr>
-    <td align="center" width="300">
-      <video 
-        src="https://github.com/user-attachments/assets/62e9910e-aea6-4b2b-9333-2e727bccfc64" 
-        controls 
-        style="max-width:100%;">
-      </video>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <em>Video may be compressed by GitHub</em>
-    </td>
-  </tr>
-</table>
 
 ---
 
@@ -457,9 +216,7 @@ Below is a ChatGPT template that I personally often use to get prompts:
 
     Stay in a loop: one image in, one motion prompt out. Do not explain, ask questions, or generate multiple options.
 
-You paste the instruct to ChatGPT and then feed it an image to get prompt like this:
 
-![image](https://github.com/user-attachments/assets/586c53b9-0b8c-4c94-b1d3-d7e7c1a705c3)
 
 *The man dances powerfully, striking sharp poses and gliding smoothly across the reflective floor.*
 
