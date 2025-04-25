@@ -6,6 +6,15 @@ os.environ['HF_HOME'] = os.path.abspath(os.path.realpath(os.path.join(os.path.di
 
 import gradio as gr
 import torch
+torch.backends.cudnn.enabled = False
+torch.backends.cuda.enable_flash_sdp(False)
+torch.backends.cuda.enable_math_sdp(True)
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+if hasattr(torch.backends.cuda, "enable_cudnn_sdp"):
+    torch.backends.cuda.enable_cudnn_sdp(False)
+print(f"GPU: {torch.cuda.get_device_name()}")
+#import sys
+#print(f"Python: {sys.version}")
 import traceback
 import einops
 import safetensors.torch as sf
@@ -67,6 +76,16 @@ if not high_vram:
     vae.enable_slicing()
     vae.enable_tiling()
 
+# VAE Tiling size
+vae.enable_tiling(
+    tile_sample_min_height=128,  #256
+    tile_sample_min_width=128,   #256
+    tile_sample_min_num_frames=12,  #16
+    tile_sample_stride_height=96,  #292
+    tile_sample_stride_width=96,   #192
+    tile_sample_stride_num_frames=10   #12
+)
+
 transformer.high_quality_fp32_output_for_inference = True
 print('transformer.high_quality_fp32_output_for_inference = True')
 
@@ -100,7 +119,7 @@ os.makedirs(outputs_folder, exist_ok=True)
 
 
 @torch.no_grad()
-def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf):
+def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution=320, imagemode=True, savepng=True):
     total_latent_sections = (total_second_length * 30) / (latent_window_size * 4)
     total_latent_sections = int(max(round(total_latent_sections), 1))
 
@@ -138,7 +157,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
         stream.output_queue.push(('progress', (None, '', make_progress_bar_html(0, 'Image processing ...'))))
 
         H, W, C = input_image.shape
-        height, width = find_nearest_bucket(H, W, resolution=640)
+        height, width = find_nearest_bucket(H, W, resolution=resolution)
         input_image_np = resize_and_center_crop(input_image, target_width=width, target_height=height)
 
         Image.fromarray(input_image_np).save(os.path.join(outputs_folder, f'{job_id}.png'))
@@ -297,6 +316,21 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
 
             save_bcthw_as_mp4(history_pixels, output_filename, fps=30, crf=mp4_crf)
 
+            if savepng:
+                png_dir = os.path.splitext(output_filename)[0]
+                os.makedirs(png_dir, exist_ok=True)
+                num_frames_to_save = history_pixels.shape[2]
+                for t in range(num_frames_to_save):
+                    frame = history_pixels[0, :, t, :, :].permute(1, 2, 0).cpu().numpy()
+                    if frame.min() < 0:  # [-1, 1]
+                        frame = (frame + 1) * 127.5
+                    else:  # [0, 1]
+                        frame = frame * 255.0
+                    frame = frame.clip(0, 255).astype(np.uint8)
+                    frame_img = Image.fromarray(frame)
+                    frame_filename = os.path.join(png_dir, f'{t:04d}.png')
+                    frame_img.save(frame_filename, format='PNG')
+
             print(f'Decoded. Current latent shape {real_history_latents.shape}; pixel shape {history_pixels.shape}')
 
             stream.output_queue.push(('file', output_filename))
@@ -315,7 +349,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
     return
 
 
-def process(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf):
+def process(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng):
     global stream
     assert input_image is not None, 'No input image!'
 
@@ -323,7 +357,7 @@ def process(input_image, prompt, n_prompt, seed, total_second_length, latent_win
 
     stream = AsyncStream()
 
-    async_run(worker, input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf)
+    async_run(worker, input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng)
 
     output_filename = None
 
@@ -370,7 +404,11 @@ with block:
                 end_button = gr.Button(value="End Generation", interactive=False)
 
             with gr.Group():
-                use_teacache = gr.Checkbox(label='Use TeaCache', value=True, info='Faster speed, but often makes hands and fingers slightly worse.')
+                with gr.Row():
+                    with gr.Column(scale=3):
+                        use_teacache = gr.Checkbox(label='Use TeaCache', value=True, info='Faster speed, but often makes hands and fingers slightly worse.')
+                    with gr.Column(scale=1, min_width=0):
+                        savepng = gr.Checkbox(label='SAVE PNG', value=True, info='Save frames.')
 
                 n_prompt = gr.Textbox(label="Negative Prompt", value="", visible=False)  # Not used
                 seed = gr.Number(label="Seed", value=31337, precision=0)
@@ -383,9 +421,13 @@ with block:
                 gs = gr.Slider(label="Distilled CFG Scale", minimum=1.0, maximum=32.0, value=10.0, step=0.01, info='Changing this value is not recommended.')
                 rs = gr.Slider(label="CFG Re-Scale", minimum=0.0, maximum=1.0, value=0.0, step=0.01, visible=False)  # Should not change
 
-                gpu_memory_preservation = gr.Slider(label="GPU Inference Preserved Memory (GB) (larger means slower)", minimum=6, maximum=128, value=6, step=0.1, info="Set this number to a larger value if you encounter OOM. Larger value causes slower speed.")
+                gpu_memory_preservation = gr.Slider(label="GPU Inference Preserved Memory (GB) (larger means slower)", minimum=6, maximum=128, value=14, step=0.1, info="Set this number to a larger value if you encounter OOM. Larger value causes slower speed.")
+
+                resolution = gr.Slider(label="RESOLUTION", minimum=240, maximum=640, value=368, step=16, info="Target Movie resolution.")
 
                 mp4_crf = gr.Slider(label="MP4 Compression", minimum=0, maximum=100, value=16, step=1, info="Lower means better quality. 0 is uncompressed. Change to 16 if you get black outputs. ")
+
+                imagemode = gr.Checkbox(label='IMAGE MODE', value=True, info='Faster speed, Low VRAM, Good for Picture. (Bad for Movie?)', visible=False)
 
         with gr.Column():
             preview_image = gr.Image(label="Next Latents", height=200, visible=False)
@@ -396,7 +438,7 @@ with block:
 
     gr.HTML('<div style="text-align:center; margin-top:20px;">Share your results and find ideas at the <a href="https://x.com/search?q=framepack&f=live" target="_blank">FramePack Twitter (X) thread</a></div>')
 
-    ips = [input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf]
+    ips = [input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng]
     start_button.click(fn=process, inputs=ips, outputs=[result_video, preview_image, progress_desc, progress_bar, start_button, end_button])
     end_button.click(fn=end_process)
 
