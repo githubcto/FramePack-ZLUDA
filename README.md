@@ -20,7 +20,7 @@ FramePack ZLUDA
    python.exe -m venv venv
    venv\Scripts\activate.bat
    python.exe -m pip install --upgrade pip
-   pip install torch==2.6.0 torchvision --index-url https://download.pytorch.org/whl/cu118
+   pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
    pip install -r requirements.txt
    curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.dba64c0966df2c71e82255e942c96e2e1cea3a2d/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
    mkdir .zluda && tar -xf zluda.zip -C .zluda  --strip-components=1
@@ -46,22 +46,26 @@ FramePack-user.bat
 
 1st run,
 - will download 40GB.
-- ZLUDA compile takes around 20min.
-- Duriing this 20min, you'll see the message 
-   "Compilation is in progress. Please wait..." every 30 sec.
+- ZLUDA compile takes 30 minutes or more.
+
+   Duriing this 30 minutes, you'll see the message 
+
+   "Compilation is in progress. Please wait..." every minute.
 
 If FramePack-user.bat does not work, try FramePack-user-DEVICE0.bat or FramePack-user-DEVICE1.bat .
 
 ## Tips
 1st time generate,
  try
-- Use square image. FramePack read and resize it.
+- Use square image. FramePack read it and resize automatically.
 - 1 sec
 - 10 steps
-- orher values: use preset
+- other values: use preset
 - Start Generation, see VRAM and DRAM usage.
 
-DRAM 64GB minimum. 64GB enouth for linux. 96GB enouth for windows. 128GB recommend. Set page file AUTO, 64GB or more.
+DRAM 64GB minimum. 64GB enough for linux. 96GB enough for windows. 128GB recommend.
+
+Set windowOS page file "auto", "64GB" or more.
 
 TeaCache is fast, but output quality is not so good. Try TeaCache and you feel good movie, then disable TeaCache and try same seed again.
 
@@ -75,7 +79,7 @@ Since my VGA is RX 6000, I can not verify some Attentions which RX 7000 support,
 
 [Repeerc/flash-attention-v2-RDNA3-minimal](https://github.com/Repeerc/flash-attention-v2-RDNA3-minimal)
 
-( You need modify [demo_gradio.py](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L10) from "False" to "True", maybe.)
+( You need modify [demo_gradio.py (around line 10th.)](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L10) from "False" to "True", maybe.)
 
 torch.backends.cuda.enable_flash_sdp(False)
 
@@ -108,6 +112,13 @@ venv/Lib/site-packages/diffusers/models/autoencoders/autoencoder_kl_hunyuan_vide
 
 HuggingFace diffusers [autoencoder_kl_hunyuan_video.py](https://github.com/huggingface/diffusers/blob/f00a995753732210a696de447cd0db80e181c30a/src/diffusers/models/autoencoders/autoencoder_kl_hunyuan_video.py#L717-L766) 
 
+## ChangeLog
+
+2025 Apr. 26th : add FPS switch. default=24fps. QuickList2nd changed. (torch2.7.0 and ZLUDA3.9.3 works, but keep torch2.6.0 for a while).
+
+2025 Apr. 25th : Init. ZLUDA, RESOLUTION, SAVE PNG, README.
+
+---
 ---
 
 <p align="center">
