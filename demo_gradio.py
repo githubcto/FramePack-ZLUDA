@@ -119,8 +119,8 @@ os.makedirs(outputs_folder, exist_ok=True)
 
 
 @torch.no_grad()
-def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution=320, imagemode=True, savepng=True):
-    total_latent_sections = (total_second_length * 30) / (latent_window_size * 4)
+def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution=320, imagemode=True, savepng=True, fps2430=24):
+    total_latent_sections = (total_second_length * fps2430) / (latent_window_size * 4)
     total_latent_sections = int(max(round(total_latent_sections), 1))
 
     job_id = generate_timestamp()
@@ -253,7 +253,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
                 current_step = d['i'] + 1
                 percentage = int(100.0 * current_step / steps)
                 hint = f'Sampling {current_step}/{steps}'
-                desc = f'Total generated frames: {int(max(0, total_generated_latent_frames * 4 - 3))}, Video length: {max(0, (total_generated_latent_frames * 4 - 3) / 30) :.2f} seconds (FPS-30). The video is being extended now ...'
+                desc = f'Total generated frames: {int(max(0, total_generated_latent_frames * 4 - 3))}, Video length: {max(0, (total_generated_latent_frames * 4 - 3) / fps2430) :.2f} seconds (FPS-fps2430). The video is being extended now ...'
                 stream.output_queue.push(('progress', (preview, desc, make_progress_bar_html(percentage, hint))))
                 return
 
@@ -314,7 +314,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
 
             output_filename = os.path.join(outputs_folder, f'{job_id}_{total_generated_latent_frames}.mp4')
 
-            save_bcthw_as_mp4(history_pixels, output_filename, fps=30, crf=mp4_crf)
+            save_bcthw_as_mp4(history_pixels, output_filename, fps=fps2430, crf=mp4_crf)
 
             if savepng:
                 png_dir = os.path.splitext(output_filename)[0]
@@ -349,7 +349,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
     return
 
 
-def process(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng):
+def process(input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng, fps2430):
     global stream
     assert input_image is not None, 'No input image!'
 
@@ -357,7 +357,7 @@ def process(input_image, prompt, n_prompt, seed, total_second_length, latent_win
 
     stream = AsyncStream()
 
-    async_run(worker, input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng)
+    async_run(worker, input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng, fps2430)
 
     output_filename = None
 
@@ -383,7 +383,8 @@ def end_process():
 
 quick_prompts = [
     'The girl dances gracefully, with clear movements, full of charm.',
-    'A character doing some simple body movements.',
+    #'A character doing some simple body movements.',
+    'moving body very slowly.',
 ]
 quick_prompts = [[x] for x in quick_prompts]
 
@@ -423,7 +424,11 @@ with block:
 
                 gpu_memory_preservation = gr.Slider(label="GPU Inference Preserved Memory (GB) (larger means slower)", minimum=6, maximum=128, value=14, step=0.1, info="Set this number to a larger value if you encounter OOM. Larger value causes slower speed.")
 
-                resolution = gr.Slider(label="RESOLUTION", minimum=240, maximum=640, value=368, step=16, info="Target Movie resolution.")
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        resolution = gr.Slider(label="RESOLUTION", minimum=240, maximum=640, value=368, step=16, info="Target Movie resolution.")
+                    with gr.Column(scale=1, min_width=0):
+                        fps2430 = gr.Slider(label="FPS", minimum=24, maximum=30, value=24, step=6)
 
                 mp4_crf = gr.Slider(label="MP4 Compression", minimum=0, maximum=100, value=16, step=1, info="Lower means better quality. 0 is uncompressed. Change to 16 if you get black outputs. ")
 
@@ -438,7 +443,7 @@ with block:
 
     gr.HTML('<div style="text-align:center; margin-top:20px;">Share your results and find ideas at the <a href="https://x.com/search?q=framepack&f=live" target="_blank">FramePack Twitter (X) thread</a></div>')
 
-    ips = [input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng]
+    ips = [input_image, prompt, n_prompt, seed, total_second_length, latent_window_size, steps, cfg, gs, rs, gpu_memory_preservation, use_teacache, mp4_crf, resolution, imagemode, savepng, fps2430]
     start_button.click(fn=process, inputs=ips, outputs=[result_video, preview_image, progress_desc, progress_bar, start_button, end_button])
     end_button.click(fn=end_process)
 
