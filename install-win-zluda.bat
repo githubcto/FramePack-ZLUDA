@@ -16,7 +16,7 @@ call venv\Scripts\activate.bat
 
 python.exe -m pip install --upgrade pip
 
-pip install torch==2.6.0 torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 pip install -r requirements.txt
 
