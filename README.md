@@ -8,6 +8,8 @@ FramePack ZLUDA
 
 ## Install
 
+- install Microsoft Visual C++ Redistributable from [microsoft.com](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) .
+  https://aka.ms/vs/17/release/vc_redist.x86.exe and https://aka.ms/vs/17/release/vc_redist.x64.exe
 - install python from [www.python.org](https://www.python.org/) .
    Tested Python3.10.17 and Python3.11.12 .
 - install [git](https://git-scm.com/).
@@ -54,6 +56,8 @@ FramePack-user.bat
 
 If FramePack-user.bat does not work, try FramePack-user-DEVICE0.bat or FramePack-user-DEVICE1.bat .
 
+
+
 ## Tips
 1st time generate,
  try
@@ -73,6 +77,17 @@ Saved png files can be converted mp4 movie [using ffmpeg](https://ffmpeg.org/) l
 ```
 ffmpeg.exe -framerate 30 -i %4d.png -c:v libx264 -crf 23 -pix_fmt yuv420p -an out.mp4
 ```
+
+### for RDNA2 RX 6000 VRAM16GB
+After 1st time generate, 2nd time,
+ try
+- Use square image.
+- 3.2 sec
+- Latent Window Size 4
+- 25 steps
+- RESOLUTION 512
+- other values: use preset
+- Start Generation, see VRAM and DRAM usage.
 
 ## Issue
 Since my VGA is RX 6000, I can not verify some Attentions which RX 7000 support, for example,
@@ -113,6 +128,8 @@ venv/Lib/site-packages/diffusers/models/autoencoders/autoencoder_kl_hunyuan_vide
 HuggingFace diffusers [autoencoder_kl_hunyuan_video.py](https://github.com/huggingface/diffusers/blob/f00a995753732210a696de447cd0db80e181c30a/src/diffusers/models/autoencoders/autoencoder_kl_hunyuan_video.py#L717-L766) 
 
 ## ChangeLog
+
+2025 May. 5th : FramePack-F1, unveil Latent Window Size slider.
 
 2025 Apr. 26th : add FPS switch. default=24fps. QuickList2nd changed. (torch2.7.0 and ZLUDA3.9.3 works, but keep torch2.6.0 for a while).
 
