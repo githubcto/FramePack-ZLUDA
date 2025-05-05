@@ -12,15 +12,19 @@ torch.backends.cuda.enable_math_sdp(True)
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 if hasattr(torch.backends.cuda, "enable_cudnn_sdp"):
     torch.backends.cuda.enable_cudnn_sdp(False)
+print(f"FramePack")
 print(f"GPU: {torch.cuda.get_device_name()}")
-#import sys
-#print(f"Python: {sys.version}")
+print(f"PyTorch: {torch.__version__}")
+import sys
+print(f"Python: {sys.version}")
 import traceback
 import einops
 import safetensors.torch as sf
 import numpy as np
 import argparse
 import math
+import asyncio
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from PIL import Image
 from diffusers import AutoencoderKLHunyuanVideo
@@ -72,9 +76,9 @@ text_encoder_2.eval()
 image_encoder.eval()
 transformer.eval()
 
-if not high_vram:
-    vae.enable_slicing()
-    vae.enable_tiling()
+#if not high_vram:
+#    vae.enable_slicing()
+#    vae.enable_tiling()
 
 # VAE Tiling size
 vae.enable_tiling(
@@ -253,7 +257,7 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
                 current_step = d['i'] + 1
                 percentage = int(100.0 * current_step / steps)
                 hint = f'Sampling {current_step}/{steps}'
-                desc = f'Total generated frames: {int(max(0, total_generated_latent_frames * 4 - 3))}, Video length: {max(0, (total_generated_latent_frames * 4 - 3) / fps2430) :.2f} seconds (FPS-fps2430). The video is being extended now ...'
+                desc = f'Total generated frames: {int(max(0, total_generated_latent_frames * 4 - 3))}, Video length: {max(0, (total_generated_latent_frames * 4 - 3) / fps2430) :.2f} seconds (FPS-{fps2430}). The video is being extended now ...'
                 stream.output_queue.push(('progress', (preview, desc, make_progress_bar_html(percentage, hint))))
                 return
 
@@ -316,7 +320,8 @@ def worker(input_image, prompt, n_prompt, seed, total_second_length, latent_wind
 
             save_bcthw_as_mp4(history_pixels, output_filename, fps=fps2430, crf=mp4_crf)
 
-            if savepng:
+            #if savepng:
+            if is_last_section and savepng:
                 png_dir = os.path.splitext(output_filename)[0]
                 os.makedirs(png_dir, exist_ok=True)
                 num_frames_to_save = history_pixels.shape[2]
@@ -415,7 +420,7 @@ with block:
                 seed = gr.Number(label="Seed", value=31337, precision=0)
 
                 total_second_length = gr.Slider(label="Total Video Length (Seconds)", minimum=1, maximum=120, value=5, step=0.1)
-                latent_window_size = gr.Slider(label="Latent Window Size", minimum=1, maximum=33, value=9, step=1, visible=False)  # Should not change
+                latent_window_size = gr.Slider(label="Latent Window Size", minimum=1, maximum=33, value=9, step=1, info='# Should not change')  # Should not change
                 steps = gr.Slider(label="Steps", minimum=1, maximum=100, value=25, step=1, info='Changing this value is not recommended.')
 
                 cfg = gr.Slider(label="CFG Scale", minimum=1.0, maximum=32.0, value=1.0, step=0.01, visible=False)  # Should not change
