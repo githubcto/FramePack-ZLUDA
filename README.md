@@ -71,7 +71,7 @@ DRAM 64GB minimum. 64GB enough for linux. 96GB enough for windows. 128GB recomme
 
 Set windowOS page file "auto", "64GB" or more.
 
-TeaCache is fast, but output quality is not so good. Try TeaCache and you feel good movie, then disable TeaCache and try same seed again.
+TeaCache is fast, but output quality is not so good. Try TeaCache first and you feel good movie, then disable TeaCache and try same seed again.
 
 Saved png files can be converted mp4 movie [using ffmpeg](https://ffmpeg.org/) like this.
 ```
@@ -82,7 +82,7 @@ ffmpeg.exe -framerate 30 -i %4d.png -c:v libx264 -crf 23 -pix_fmt yuv420p -an ou
 After 1st time generate, 2nd time,
  try
 - Use square image.
-- 3.2 sec
+- 2 sec
 - Latent Window Size 4
 - 25 steps
 - RESOLUTION 512
