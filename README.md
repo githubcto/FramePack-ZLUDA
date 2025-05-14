@@ -20,6 +20,8 @@ ZLUDA v3.9.5 support Adrenalin 25.5.1.
 remove .zluda folder, download v3.9.5 and replace DLLs.
 ```
 curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.5e717459179dc272b7d7d23391f0fad66c7459cf/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
+mkdir .zluda && tar -xf zluda.zip -C .zluda  --strip-components=1
+del zluda.zip
 if not exist "%~dp0venv\Lib\site-packages\torch\lib\nvrtc_cuda.dll" copy venv\Lib\site-packages\torch\lib\nvrtc64_112_0.dll venv\Lib\site-packages\torch\lib\nvrtc_cuda.dll & REM (optional)
 copy .zluda\cublas.dll venv\Lib\site-packages\torch\lib\cublas64_11.dll /y
 copy .zluda\cusparse.dll venv\Lib\site-packages\torch\lib\cusparse64_11.dll /y
