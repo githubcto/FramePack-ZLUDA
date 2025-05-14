@@ -1,62 +1,93 @@
 <div align="center">
 
-# FramePack-ZLUDA
+# FramePack-ZLUDA Attention branch
 
-FramePack ZLUDA
+FramePack ZLUDA Attention branch
 
 </div>
+
+## Attention branch
+Support Flash Attention 2.
+
+make 640x640 resolution movie. ( recommend 512x512 for 16GB VRAM VGA)
+
+### Attention branch additional requirements:
+- Torch 2.7.0 or higher.
+    If torch2.6.0 is already installed, remove venv folder and refer to Install.
+- Triton. (see Install)
+- HIP SDK extension. (see Install)
+- cuDNN. replace cudnn64_9.dll.
+- Python libs ( not lib ) and Include under venv folder.
 
 ## Install
 
 - install Microsoft Visual C++ Redistributable from [microsoft.com](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) .
-  https://aka.ms/vs/17/release/vc_redist.x86.exe and https://aka.ms/vs/17/release/vc_redist.x64.exe
-- install python from [www.python.org](https://www.python.org/) .
-   Tested Python3.10.17 and Python3.11.12 .
+    
+    https://aka.ms/vs/17/release/vc_redist.x86.exe and https://aka.ms/vs/17/release/vc_redist.x64.exe
+- install python3.10.x from [www.python.org](https://www.python.org/) .
+    Tested Python3.10.17 . (Python3.11.x not yet.)
 - install [git](https://git-scm.com/).
 - install [AMD HIP SDK for Windows 6.2.4](https://www.amd.com/en/developer/resources/rocm-hub/hip-sdk.html) .
-   If  5.7.1 already installed, uninstall 5.7.1 before installing 6.2.4 .
+    If  5.7.1 already installed, uninstall 5.7.1 before installing 6.2.4 .
+- install HIP SDK extension
+    
+    visit SD.Next wiki and see cuDNN. Download, extract, and copy path/to/AMD/ROCm/6.2
+    
+    https://github.com/vladmandic/sdnext/wiki/ZLUDA
 - Open Command Prompt (not PowerShell), then run the following:
-```
-   git clone https://github.com/githubcto/FramePack-ZLUDA.git
-   cd FramePack-ZLUDA
-   python.exe -m venv venv
-   venv\Scripts\activate.bat
-   python.exe -m pip install --upgrade pip
-   pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-   pip install -r requirements.txt
-   curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.dba64c0966df2c71e82255e942c96e2e1cea3a2d/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
-   mkdir .zluda && tar -xf zluda.zip -C .zluda  --strip-components=1
-```
-   Next, replace the following DLL files in venv/Lib/site-packages/torch/lib with the ones provided in the .zluda folder:
-   
-   cublas.dll
-   cusparse.dll
-   cufft.dll
-   cufftw.dll
-   nvrtc.dll
-   
-   You can find them at venv/Lib/site-packages/torch/lib.
-   
-   or,
-   
-   [download zip](https://github.com/githubcto/FramePack-ZLUDA/archive/refs/heads/main.zip), extract, and refer to install-win-zluda.bat .
+    ```
+    git clone --single-branch --branch attention https://github.com/githubcto/FramePack-ZLUDA.git
+    cd FramePack-ZLUDA
+    python.exe -m venv venv
+    venv\Scripts\activate.bat
+    python.exe -m pip install --upgrade pip
+    pip install torch==2.7.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    pip install -r requirements.txt
+    pip install --upgrade triton-3.3.0+git5dcd7566-cp310-cp310-win_amd64.whl setuptools
+    curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.5e717459179dc272b7d7d23391f0fad66c7459cf/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
+    mkdir .zluda && tar -xf zluda.zip -C .zluda --strip-components=1
+    echo .
+    ```
+    Next, replace the following DLL files in venv/Lib/site-packages/torch/lib with the ones provided in the .zluda folder:
+    
+    cublas.dll
+    cusparse.dll
+    cufft.dll
+    cufftw.dll
+    nvrtc.dll
+    cudnn.dll
+    
+    You can find them at venv/Lib/site-packages/torch/lib.
+    ```
+    if not exist "%~dp0venv\Lib\site-packages\torch\lib\nvrtc_cuda.dll" copy venv\Lib\site-packages\torch\lib\nvrtc64_112_0.dll venv\Lib\site-packages\torch\lib\nvrtc_cuda.dll & REM (optional)
+    copy .zluda\cublas.dll venv\Lib\site-packages\torch\lib\cublas64_11.dll /y
+    copy .zluda\cusparse.dll venv\Lib\site-packages\torch\lib\cusparse64_11.dll /y
+    copy .zluda\nvrtc.dll venv\Lib\site-packages\torch\lib\nvrtc64_112_0.dll /y
+    copy .zluda\cudnn.dll venv\Lib\site-packages\torch\lib\cudnn64_9.dll /y
+    echo Finished
+    ```
+    or,
+    
+    refer to install-win-zluda-attention.bat .
+    
+- copy Python libs ( not lib ) and Include
+    from C:\Users\(user ID)\AppData\Local\Programs\Python\Python310 to venv.
+    Include folder may already available. overwrite.
 
 
 
 ## Run
-FramePack-user.bat
+FramePack-attention.bat
 
 1st run,
 - will download 40GB.
 - ZLUDA compile takes 30 minutes or more.
 
-   Duriing this 30 minutes, you'll see the message 
+    Duriing this 30 minutes, you'll see the message 
 
-   "Compilation is in progress. Please wait..." every minute.
+    "Compilation is in progress. Please wait..." every minute.
 
-If FramePack-user.bat does not work, try FramePack-user-DEVICE0.bat or FramePack-user-DEVICE1.bat .
-
-
+FramePackF1-attention.bat use different model files, will download additional 25GB.
 
 ## Tips
 1st time generate,
@@ -66,28 +97,31 @@ If FramePack-user.bat does not work, try FramePack-user-DEVICE0.bat or FramePack
 - 10 steps
 - other values: use preset
 - Start Generation, see VRAM and DRAM usage.
+- 1st time generate may error due to triton/MIOpen compilation.
+
+2nd time generate,
+ try
+- Use square image. FramePack read it and resize automatically.
+- 2 sec
+- Latent Window Size: 9 ( or 4 )
+- 25 steps
+- GPU Inference Preserved Memory(GB): 6 - 8
+- RESOLUTION: 512 - 640
+- other values: use preset
+- Start Generation, see VRAM and DRAM usage.
+
+When triton is something wrong, remove .triton folder at "C:\Users\\(user ID)\ " .
 
 DRAM 64GB minimum. 64GB enough for linux. 96GB enough for windows. 128GB recommend.
 
-Set windowOS page file "auto", "64GB" or more.
+Set windowsOS page file "auto", "64GB" or more.
 
 TeaCache is fast, but output quality is not so good. Try TeaCache first and you feel good movie, then disable TeaCache and try same seed again.
 
 Saved png files can be converted mp4 movie [using ffmpeg](https://ffmpeg.org/) like this.
 ```
-ffmpeg.exe -framerate 30 -i %4d.png -c:v libx264 -crf 23 -pix_fmt yuv420p -an out.mp4
+ffmpeg.exe -framerate 24 -i %4d.png -c:v libx264 -crf 23 -pix_fmt yuv420p -an out.mp4
 ```
-
-### for RDNA2 RX 6000 VRAM16GB
-After 1st time generate, 2nd time,
- try
-- Use square image.
-- 2 sec
-- Latent Window Size 4
-- 25 steps
-- RESOLUTION 512
-- other values: use preset
-- Start Generation, see VRAM and DRAM usage.
 
 ## Issue
 Since my VGA is RX 6000, I can not verify some Attentions which RX 7000 support, for example,
@@ -102,11 +136,13 @@ torch.backends.cuda.enable_flash_sdp(False)
 
 So, I shall close FramePack-ZLUDA repo without any notice.
 
+Edit 2025 May 14th: made attention branch. Flash Attention works, even rx 6000.
+
 ## for Linux ROCm
 
 This code may help.
 
-FramePack-ZLUDA [demo_gradio.py](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L74-L87) 
+FramePack-ZLUDA [demo_gradio.py](https://github.com/githubcto/FramePack-ZLUDA/blob/main/demo_gradio.py#L79-L91) 
 ```
 # VAE Tiling size
 vae.enable_tiling(
@@ -127,9 +163,21 @@ venv/Lib/site-packages/diffusers/models/autoencoders/autoencoder_kl_hunyuan_vide
 
 HuggingFace diffusers [autoencoder_kl_hunyuan_video.py](https://github.com/huggingface/diffusers/blob/f00a995753732210a696de447cd0db80e181c30a/src/diffusers/models/autoencoders/autoencoder_kl_hunyuan_video.py#L717-L766) 
 
+
+## codes
+Thanks
+
+zluda related: https://github.com/lshqqytiger/stable-diffusion-webui-amdgpu
+
+triton: https://github.com/lshqqytiger/triton
+
+Flash Attention: https://github.com/Dao-AILab/flash-attention
+
 ## ChangeLog
 
-2025 May. 5th : FramePack-F1, unveil Latent Window Size slider.
+2025 May 14th : torch2.7.0 and ZLUDA3.9.5. add attention branch.
+
+2025 May 05th : FramePack-F1, unveil Latent Window Size slider.
 
 2025 Apr. 26th : add FPS switch. default=24fps. QuickList2nd changed. (torch2.7.0 and ZLUDA3.9.3 works, but keep torch2.6.0 for a while).
 
