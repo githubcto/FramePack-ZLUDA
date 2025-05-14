@@ -44,8 +44,8 @@ make 640x640 resolution movie. ( recommend 512x512 for 16GB VRAM VGA)
     pip install torch==2.7.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
     pip install -r requirements.txt
     pip install --upgrade triton-3.3.0+git5dcd7566-cp310-cp310-win_amd64.whl setuptools
-    curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.5e717459179dc272b7d7d23391f0fad66c7459cf/ZLUDA-windows-rocm6-amd64.zip > zluda.zip
-    mkdir .zluda && tar -xf zluda.zip -C .zluda --strip-components=1
+    curl -s -L https://github.com/lshqqytiger/ZLUDA/releases/download/rel.5e717459179dc272b7d7d23391f0fad66c7459cf/ZLUDA-nightly-windows-rocm6-amd64.zip > zluda.zip
+    mkdir .zluda && tar -xf zluda.zip -C .zluda
     echo .
     ```
     Next, replace the following DLL files in venv/Lib/site-packages/torch/lib with the ones provided in the .zluda folder:
