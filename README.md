@@ -17,7 +17,7 @@ make 640x640 resolution movie. ( recommend 512x512 for 16GB VRAM VGA)
 - Triton. (see Install)
 - HIP SDK extension. (see Install)
 - cuDNN. replace cudnn64_9.dll.
-- Python libs ( not lib ) and Include under venv folder.
+- Python libs folder ( not lib folder ) and Include folder under venv folder.
 
 ## Install
 
@@ -31,7 +31,7 @@ make 640x640 resolution movie. ( recommend 512x512 for 16GB VRAM VGA)
     If  5.7.1 already installed, uninstall 5.7.1 before installing 6.2.4 .
 - install HIP SDK extension
     
-    visit SD.Next wiki and see cuDNN. Download, extract, and copy path/to/AMD/ROCm/6.2
+    visit SD.Next wiki and see cuDNN. Download, extract, and copy C:\Program Files\AMD\ROCm\6.2
     
     https://github.com/vladmandic/sdnext/wiki/ZLUDA
 - Open Command Prompt (not PowerShell), then run the following:
@@ -70,8 +70,10 @@ make 640x640 resolution movie. ( recommend 512x512 for 16GB VRAM VGA)
     
     refer to install-win-zluda-attention.bat .
     
-- copy Python libs ( not lib ) and Include
-    from C:\Users\(user ID)\AppData\Local\Programs\Python\Python310 to venv.
+- copy Python libs folder ( not lib folder ) and Include folder
+    
+    from C:\Users\\(user ID)\AppData\Local\Programs\Python\Python310 to venv.
+    
     Include folder may already available. overwrite.
 
 

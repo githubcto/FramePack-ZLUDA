@@ -12,6 +12,7 @@ set COMMANDLINE_ARGS=
 set DISABLE_ADDMM_CUDA_LT=1
 set ZLUDA_COMGR_LOG_LEVEL=1
 set FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
+set "TRITON_CACHE_DIR=%~dp0.triton_cache"
 set MIOPEN_FIND_MODE=2
 @REM set INCLUDE="%~dp0venv\include";%INCLUDE%
 @REM set ZLUDA_NVRTC_LIB="%~dp0venv\Lib\site-packages\torch\lib\nvrtc_cuda.dll"
